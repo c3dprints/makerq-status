@@ -18,6 +18,13 @@
   .step.done{color:#00e890}
   .muted{color:#7fa0bd;text-align:center;font-size:12px;margin-top:14px}
   img.logo{max-width:160px;max-height:90px;height:auto}
+  .approve-btn{display:block;width:100%;box-sizing:border-box;background:#00b341;color:#fff;border:0;
+    border-radius:12px;padding:16px;font-size:17px;font-weight:bold;cursor:pointer;margin-top:6px}
+  .approve-btn:hover{background:#00c94b}
+  .approve-btn:disabled{background:#3a4a5c;cursor:default}
+  .approved-box{background:rgba(0,232,144,.10);border:1px solid rgba(0,232,144,.4);border-radius:12px;
+    padding:16px;color:#00e890;font-weight:bold;text-align:center}
+  .approve-hint{color:#7fa0bd;font-size:12px;text-align:center;margin:10px 0 0}
 </style>
 </head>
 <body>
@@ -44,20 +51,45 @@ function render(d){
   var order=["Quoted","Approved","Awaiting Payment","Printing","Completed"];
   var cur=String(d.status||"New"), idx=order.indexOf(cur);
   var stepHtml=steps.map(function(s,i){var done=idx>=0&&i<=idx;return '<div class="step'+(done?' done':'')+'">'+(done?'✓':'○')+' <strong>'+esc(s)+'</strong></div>'}).join("");
+  var approveHtml="";
+  if(d.approved){
+    approveHtml='<div class="card"><div class="approved-box">✓ Quote approved — thank you!'+
+      '<div style="font-weight:normal;color:#7fa0bd;font-size:13px;margin-top:6px">'+
+      esc(name)+' has been notified and will get started.</div></div></div>';
+  } else if(d.approvable){
+    approveHtml='<div class="card"><h3>Ready to go ahead?</h3>'+
+      '<p style="color:#8aa8c5;margin:0 0 12px">Approve this quote to let '+esc(name)+' begin your order.</p>'+
+      '<button id="approveBtn" class="approve-btn" onclick="approve()">Approve this quote</button>'+
+      '<p class="approve-hint">Have a question first? Just reply to the email.</p></div>';
+  }
   root.innerHTML=
     '<div style="text-align:center;margin-bottom:12px">'+logoHtml+'</div>'+
     '<div class="card"><h2>Order Status</h2><div class="badge">'+esc(cur)+'</div>'+
     '<div class="price">'+esc(d.price_text||"")+'</div>'+
     (d.note?'<div class="note">'+esc(d.note)+'</div>':'')+'</div>'+
+    approveHtml+
     '<div class="card"><h3>Progress</h3>'+stepHtml+'</div>'+
     '<p class="muted">Powered by MakerQ</p>';
   document.title=(d.shop_name||"Order")+" — Order Status";
 }
-(function(){
+function approve(){
+  var b=document.getElementById("approveBtn");
+  if(b){b.disabled=true;b.textContent="Approving…";}
+  fetch(API+"?action=approve",{method:"POST",headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({token:token()})})
+    .then(function(r){return r.json()})
+    .then(function(res){
+      if(res&&res.ok){ load(); }
+      else { if(b){b.disabled=false;b.textContent="Approve this quote";} alert("Sorry, that didn't go through. Please try again."); }
+    })
+    .catch(function(){ if(b){b.disabled=false;b.textContent="Approve this quote";} alert("Network error — please try again."); });
+}
+function load(){
   var t=token();
   if(!t){render({found:false});return}
   fetch(API+"?token="+encodeURIComponent(t)).then(function(r){return r.json()}).then(render).catch(function(){render({found:false})});
-})();
+}
+load();
 </script>
 </body>
 </html>
