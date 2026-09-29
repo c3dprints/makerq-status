@@ -13,6 +13,8 @@
   h3{color:#ff8c3a;margin:0 0 8px}
   .badge{display:inline-block;border:1px solid #1e3550;border-radius:999px;padding:6px 12px;color:#33ccff;font-weight:bold}
   .price{font-size:28px;color:#00e890;font-weight:bold;margin:12px 0}
+  .update-photo{display:block;width:100%;height:auto;margin-top:10px;border-radius:12px;
+    border:1px solid rgba(255,255,255,.12)}
   .note{background:rgba(255,140,58,.08);border:1px solid rgba(255,140,58,.35);border-radius:12px;padding:12px;color:#ff8c3a;margin-top:10px}
   .step{padding:12px 14px;margin:8px 0;border:1px solid #1e3550;border-radius:12px;background:#0d1928;color:#8aa8c5}
   .step.done{color:#00e890}
@@ -66,7 +68,11 @@ function render(d){
     '<div style="text-align:center;margin-bottom:12px">'+logoHtml+'</div>'+
     '<div class="card"><h2>Order Status</h2><div class="badge">'+esc(cur)+'</div>'+
     '<div class="price">'+esc(d.price_text||"")+'</div>'+
-    (d.note?'<div class="note">'+esc(d.note)+'</div>':'')+'</div>'+
+    (d.note?'<div class="note">'+esc(d.note)+'</div>':'')+
+    // The photo is part of the same update as the note, so it sits with it.
+    // Opens full size in a new tab, since phone photos are bigger than the card.
+    (d.image_url?'<a href="'+esc(d.image_url)+'" target="_blank" rel="noopener">'+
+      '<img class="update-photo" src="'+esc(d.image_url)+'" alt="Latest update"></a>':'')+'</div>'+
     approveHtml+
     '<div class="card"><h3>Progress</h3>'+stepHtml+'</div>'+
     '<p class="muted">Powered by MakerQ</p>';
