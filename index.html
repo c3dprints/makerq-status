@@ -59,7 +59,12 @@ function render(d){
       '<div style="font-weight:normal;color:#7fa0bd;font-size:13px;margin-top:6px">'+
       esc(name)+' has been notified and will get started.</div></div></div>';
   } else if(d.approvable){
-    approveHtml='<div class="card"><h3>Ready to go ahead?</h3>'+
+    // The proof sits inside the approve card: what you are agreeing to should
+    // be in front of you at the moment you agree, not further up the page.
+    var proofHtml=d.proof_url?('<a href="'+esc(d.proof_url)+'" target="_blank" rel="noopener">'+
+      '<img class="update-photo" src="'+esc(d.proof_url)+'" alt="Design proof"></a>'+
+      '<p style="color:#8aa8c5;font-size:13px;margin:8px 0 12px">This is what we will make.</p>'):'';
+    approveHtml='<div class="card"><h3>Ready to go ahead?</h3>'+proofHtml+
       '<p style="color:#8aa8c5;margin:0 0 12px">Approve this quote to let '+esc(name)+' begin your order.</p>'+
       '<button id="approveBtn" class="approve-btn" onclick="approve()">Approve this quote</button>'+
       '<p class="approve-hint">Have a question first? Just reply to the email.</p></div>';
