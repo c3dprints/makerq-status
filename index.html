@@ -5,45 +5,108 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Order Status</title>
 <style>
-  body{margin:0;background:#0b1623;color:#ddeeff;font-family:Arial,Helvetica,sans-serif;padding:24px}
-  .wrap{max-width:640px;margin:auto}
-  .card{background:#162236;border:1px solid #1e3550;border-radius:16px;padding:22px;margin-bottom:14px}
-  h1{color:#33ccff;margin:0}
-  h2{color:#33ccff;margin:0 0 6px}
-  h3{color:#ff8c3a;margin:0 0 8px}
-  .badge{display:inline-block;border:1px solid #1e3550;border-radius:999px;padding:6px 12px;color:#33ccff;font-weight:bold}
-  .price{font-size:28px;color:#00e890;font-weight:bold;margin:12px 0}
-  .msg{border-radius:12px;padding:10px 12px;margin:8px 0;max-width:85%;font-size:14px;line-height:1.45}
-  .msg.them{background:#16263a;border:1px solid #1e3550;color:#ddeeff}
-  .msg.me{background:rgba(0,179,65,.14);border:1px solid rgba(0,179,65,.45);color:#d8ffe8;margin-left:auto}
-  .msg .who{display:block;font-size:11px;color:#8aa8c5;margin-bottom:3px}
-  .msg-box{width:100%;box-sizing:border-box;background:#0d1928;border:1px solid #1e3550;border-radius:12px;color:#ddeeff;padding:10px;font:inherit;min-height:72px}
-  .msg-send{display:block;width:100%;box-sizing:border-box;background:#1a73e8;color:#fff;border:0;border-radius:12px;padding:12px;font-size:15px;font-weight:bold;cursor:pointer;margin-top:8px}
-  .msg-send:disabled{background:#3a4a5c;cursor:default}
-  .msg-note{color:#8aa8c5;font-size:12px;margin:8px 0 0}
-  .update-photo{display:block;width:100%;height:auto;margin-top:10px;border-radius:12px;
-    border:1px solid rgba(255,255,255,.12)}
-  .note{background:rgba(255,140,58,.08);border:1px solid rgba(255,140,58,.35);border-radius:12px;padding:12px;color:#ff8c3a;margin-top:10px}
-  .step{padding:12px 14px;margin:8px 0;border:1px solid #1e3550;border-radius:12px;background:#0d1928;color:#8aa8c5}
-  .step.done{color:#00e890}
-  .muted{color:#7fa0bd;text-align:center;font-size:12px;margin-top:14px}
-  img.logo{max-width:160px;max-height:90px;height:auto}
-  .approve-btn{display:block;width:100%;box-sizing:border-box;background:#00b341;color:#fff;border:0;
-    border-radius:12px;padding:16px;font-size:17px;font-weight:bold;cursor:pointer;margin-top:6px}
-  .approve-btn:hover{background:#00c94b}
-  .approve-btn:disabled{background:#3a4a5c;cursor:default}
-  .approved-box{background:rgba(0,232,144,.10);border:1px solid rgba(0,232,144,.4);border-radius:12px;
-    padding:16px;color:#00e890;font-weight:bold;text-align:center}
-  .approve-hint{color:#7fa0bd;font-size:12px;text-align:center;margin:10px 0 0}
+  /* Dark keeps the values this page already used, so nothing shifts for anyone
+     who has the link open. Light is picked for contrast rather than by
+     lightening the dark set: the worst pairing here is 4.5:1. */
+  :root{--bg:#0b1623;--card:#162236;--border:#1e3550;--border2:#27405e;--text:#ddeeff;
+    --muted:#8aa8c5;--blue:#33ccff;--orange:#ff8c3a;--green:#00e890;--tile:#0d1928;
+    --theirs:#1e3550;--mine:#1f4d3a;--pin:#1e3550;--err:#ff6b6b;--pill-fg:#0b1623}
+  :root[data-theme="light"]{--bg:#eef2f7;--card:#ffffff;--border:#d3dae4;--border2:#c6cfdc;
+    --text:#16202e;--muted:#55657a;--blue:#0b5ea8;--orange:#a3490a;--green:#0f7a46;
+    --tile:#f4f7fb;--theirs:#eef2f7;--mine:#e3f3ea;--pin:#fff3e6;--err:#b3261e;--pill-fg:#ffffff}
+  /* With no explicit choice, follow the device. */
+  @media(prefers-color-scheme:light){
+    :root:not([data-theme="dark"]){--bg:#eef2f7;--card:#ffffff;--border:#d3dae4;
+      --border2:#c6cfdc;--text:#16202e;--muted:#55657a;--blue:#0b5ea8;--orange:#a3490a;
+      --green:#0f7a46;--tile:#f4f7fb;--theirs:#eef2f7;--mine:#e3f3ea;--pin:#fff3e6;
+      --err:#b3261e;--pill-fg:#ffffff}
+  }
+  body{margin:0;background:var(--bg);color:var(--text);font-family:Arial,Helvetica,sans-serif;
+    padding:24px;position:relative}
+  .wrap{max-width:760px;margin:auto}
+  .wrap.wide{max-width:1040px}
+  .card{background:var(--card);border:1px solid var(--border);border-radius:18px;padding:22px;margin-bottom:16px}
+  h1{color:var(--blue);margin:0 0 8px;font-size:26px}
+  h2{color:var(--orange);margin:0 0 12px;font-size:19px}
+  h3{color:var(--orange);margin:0 0 6px;font-size:15px}
+  p{color:var(--muted)}
+  .themebtn{position:absolute;top:14px;right:14px;background:var(--tile);color:var(--muted);
+    border:1px solid var(--border);border-radius:999px;padding:7px 13px;font-size:13px;
+    cursor:pointer;min-height:36px}
+  .themebtn:hover{border-color:var(--blue);color:var(--blue)}
+  .badge{display:inline-block;border:1px solid var(--border);border-radius:999px;padding:6px 10px;
+    color:var(--blue);font-weight:bold}
+  .price{font-size:30px;color:var(--green);font-weight:bold;margin:12px 0}
+  .shoplinks{display:flex;flex-wrap:wrap;gap:10px;margin:2px 0 14px}
+  .shoplinks a{display:inline-flex;align-items:center;min-height:44px;box-sizing:border-box;
+    background:var(--tile);border:1px solid var(--border);border-radius:999px;
+    padding:11px 20px;color:var(--blue);font-size:15px;font-weight:600;text-decoration:none}
+  .shoplinks a:hover{border-color:var(--blue)}
+  /* The proof sits beside the status on a laptop, so the artwork and the button
+     are both above the fold instead of under it. */
+  .header{display:grid;gap:16px 22px;align-items:start;
+    grid-template-columns:minmax(0,1fr) 300px;grid-template-areas:"status proof"}
+  .header.no-proof{grid-template-columns:1fr;grid-template-areas:"status"}
+  .status{grid-area:status}
+  .proof{grid-area:proof}
+  /* Below this the proof column is too narrow to judge artwork by, and the price
+     starts to wrap, so stack: status first, then the thing to act on. */
+  @media(max-width:639px){
+    .header,.header.no-proof{grid-template-columns:1fr;grid-template-areas:"status" "proof"}
+    body{padding:14px}
+  }
+  .proof-say{margin:0 0 10px;font-size:13px}
+  .proof img{display:block;width:100%;aspect-ratio:1;object-fit:contain;background:var(--bg);
+    border-radius:12px;border:1px solid var(--border)}
+  /* Dark text on the green, not white: white on #00b341 is 2.79:1, which is not
+     enough for the most important button on the page. */
+  .approve{display:block;width:100%;box-sizing:border-box;margin-top:10px;min-height:44px;
+    background:#00b341;color:#0b1623;border:0;border-radius:12px;font-size:16px;
+    font-weight:bold;cursor:pointer}
+  .approve:hover{background:#00c94b}
+  .approve:disabled{background:#3a4a5c;color:#dfe9f3;cursor:default}
+  .approved-note{background:rgba(0,232,144,.10);border:1px solid rgba(0,232,144,.4);
+    border-radius:12px;padding:12px;color:var(--green);margin-top:10px;font-size:14px}
+  .fine{color:var(--muted);font-size:12px;margin:8px 0 0}
+  .step{display:flex;gap:10px;align-items:center;background:var(--tile);border:1px solid var(--border);
+    border-radius:12px;padding:14px;margin-bottom:10px}
+  .done{color:var(--green);border-color:rgba(0,232,144,.45)}
+  .pending{color:var(--muted)}
+  /* The shop's latest note is not a message: they overwrite it in place, so
+     putting it in the thread would reorder the conversation on every edit. */
+  .pinned{border-left:3px solid var(--orange);background:var(--pin);border-radius:0 12px 12px 0;
+    padding:12px 14px;margin:0 0 14px}
+  .pinned small{color:var(--muted);font-size:12px}
+  .pin-body{color:var(--text);margin-top:4px;white-space:pre-wrap}
+  .pin-photo{display:block;width:100%;max-width:420px;height:auto;border-radius:10px;
+    border:1px solid var(--border2);margin-top:10px}
+  .msg{border-radius:12px;padding:10px 12px;margin:8px 0;max-width:85%;font-size:14px;
+    line-height:1.45;white-space:pre-wrap}
+  .msg.them{background:var(--theirs);color:var(--text)}
+  .msg.me{background:var(--mine);color:var(--text);margin-left:auto}
+  .msg .who{display:block;font-size:11px;color:var(--muted);margin-bottom:3px}
+  .newline{display:flex;align-items:center;gap:10px;color:var(--blue);font-size:12px;margin:14px 0 6px}
+  .newline:before,.newline:after{content:"";flex:1;height:1px;background:var(--blue);opacity:.5}
+  .unread-pill{display:inline-block;background:var(--orange);color:var(--pill-fg);border-radius:999px;
+    padding:5px 12px;font-size:13px;font-weight:bold;text-decoration:none;margin-top:10px}
+  .composer{width:100%;box-sizing:border-box;background:var(--tile);border:1px solid var(--border);
+    border-radius:12px;color:var(--text);padding:10px;font:inherit;min-height:76px}
+  .send{display:block;width:100%;box-sizing:border-box;min-height:44px;background:#1a73e8;color:#fff;
+    border:0;border-radius:12px;padding:12px;font-size:15px;font-weight:bold;cursor:pointer;margin-top:8px}
+  .send:disabled{background:#3a4a5c;cursor:default}
+  .muted{color:var(--muted);text-align:center;font-size:12px;margin-top:14px}
+  img.logo{max-width:150px;max-height:90px;height:auto}
+  .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 </style>
 </head>
 <body>
+<button class="themebtn" id="themebtn" onclick="mqTheme()" aria-label="Switch between light and dark"></button>
 <div class="wrap" id="root">
   <div class="card"><h2>Loading your order status…</h2></div>
 </div>
 <script>
 // MakerQ shared status service (Supabase Edge Function that returns JSON).
-var shopName="";
+var shopName="", seenKey="";
 var API = "https://enyimtvgqzmpaiaeiyxj.supabase.co/functions/v1/dynamic-endpoint";
 function esc(s){return String(s==null?"":s).replace(/[&<>"']/g,function(c){return({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"})[c]})}
 function token(){ // support #token, ?token=, #token=
@@ -52,67 +115,142 @@ function token(){ // support #token, ?token=, #token=
   if(h) return decodeURIComponent(h);
   var p=new URLSearchParams(location.search); return p.get("token")||"";
 }
+// This row is written by the maker's install and read by the public, so each
+// link is checked here too rather than trusted because it arrived over the wire.
+function linksHtml(list){
+  if(!list || !list.length) return "";
+  var safe=list.filter(function(l){
+    return l && typeof l.url==="string" && /^https?:\/\//i.test(l.url) &&
+           typeof l.label==="string" && l.label.trim();
+  }).slice(0,8);
+  if(!safe.length) return "";
+  return '<div class="shoplinks">'+safe.map(function(l){
+    return '<a href="'+esc(l.url)+'" target="_blank" rel="noopener noreferrer">'+
+      esc(l.label.slice(0,40))+'</a>';
+  }).join("")+'</div>';
+}
 function render(d){
   var root=document.getElementById("root");
-  if(!d||!d.found){root.innerHTML='<div class="card"><h1 style="color:#33ccff">Order not found</h1><p>This status link is no longer available.</p></div>';return}
+  if(!d||!d.found){root.className="wrap";root.innerHTML='<div class="card"><h1>Order not found</h1><p>This status link is no longer available.</p></div>';return}
   var name=esc(d.shop_name||"Your shop");shopName=d.shop_name||"Your shop";
+  seenKey="mq-seen-"+token();
   var logo=String(d.logo_url||"");
-  var logoHtml=logo.indexOf("http")===0?'<img class="logo" src="'+esc(logo)+'" alt="'+name+'">':'<h1 style="color:#33ccff;margin:0">'+name+'</h1>';
+  var logoHtml=logo.indexOf("http")===0?'<div style="margin-bottom:6px"><img class="logo" src="'+esc(logo)+'" alt="'+name+'"></div>':"";
   var steps=["Quote Sent","Approved","Payment Received","Printing","Completed"];
   var order=["Quoted","Approved","Awaiting Payment","Printing","Completed"];
   var cur=String(d.status||"New"), idx=order.indexOf(cur);
-  var stepHtml=steps.map(function(s,i){var done=idx>=0&&i<=idx;return '<div class="step'+(done?' done':'')+'">'+(done?'✓':'○')+' <strong>'+esc(s)+'</strong></div>'}).join("");
-  var approveHtml="";
-  if(d.approved){
-    approveHtml='<div class="card"><div class="approved-box">✓ Quote approved — thank you!'+
-      '<div style="font-weight:normal;color:#7fa0bd;font-size:13px;margin-top:6px">'+
-      esc(name)+' has been notified and will get started.</div></div></div>';
-  } else if(d.approvable){
-    // The proof sits inside the approve card: what you are agreeing to should
-    // be in front of you at the moment you agree, not further up the page.
-    var proofHtml=d.proof_url?('<a href="'+esc(d.proof_url)+'" target="_blank" rel="noopener">'+
-      '<img class="update-photo" src="'+esc(d.proof_url)+'" alt="Design proof"></a>'+
-      '<p style="color:#8aa8c5;font-size:13px;margin:8px 0 12px">This is what we will make.</p>'):'';
-    approveHtml='<div class="card"><h3>Ready to go ahead?</h3>'+proofHtml+
-      '<p style="color:#8aa8c5;margin:0 0 12px">Approve this quote to let '+esc(name)+' begin your order.</p>'+
-      '<button id="approveBtn" class="approve-btn" onclick="approve()">Approve this quote</button>'+
-      '<p class="approve-hint">Have a question first? Just reply to the email.</p></div>';
+  var stepHtml=steps.map(function(s,i){var done=idx>=0&&i<=idx;
+    return '<div class="step'+(done?' done':' pending')+'"><span>'+(done?'✓':'○')+'</span><strong>'+esc(s)+'</strong></div>'}).join("");
+
+  // ---- the proof, as a column beside the status ----------------------------
+  var proofCol="";
+  if(d.proof_url){
+    var ask, btn;
+    if(d.approved){
+      ask='<p class="proof-say">This is what we will make.</p>';
+      btn='<div class="approved-note">✓ Approved, thank you. '+name+' will get started.</div>';
+    } else if(d.approvable){
+      ask='<p class="proof-say">This is what we will make. Approve it and we will start.</p>';
+      btn='<button id="approveBtn" class="approve" onclick="approve()">Approve this design</button>'+
+          '<p class="fine" id="approveNote">Have a question first? Send a message below.</p>';
+    } else {
+      ask='<p class="proof-say">This is what we will make.</p>';
+      btn="";
+    }
+    proofCol='<div class="proof"><h3>Design proof</h3>'+ask+
+      '<a href="'+esc(d.proof_url)+'" target="_blank" rel="noopener">'+
+      '<img src="'+esc(d.proof_url)+'" alt="Design proof"></a>'+btn+'</div>';
   }
+  // A quote with no proof attached still needs somewhere to approve from.
+  var approveCard="";
+  if(!proofCol){
+    if(d.approved){
+      approveCard='<div class="card"><div class="approved-note" style="margin:0">✓ Quote approved — thank you! '+
+        name+' has been notified and will get started.</div></div>';
+    } else if(d.approvable){
+      approveCard='<div class="card"><h2>Ready to go ahead?</h2>'+
+        '<p style="margin:0 0 12px">Approve this quote to let '+name+' begin your order.</p>'+
+        '<button id="approveBtn" class="approve" onclick="approve()">Approve this quote</button>'+
+        '<p class="fine" id="approveNote">Have a question first? Send a message below.</p></div>';
+    }
+  }
+
+  // ---- the shop's latest note, pinned above the conversation ---------------
+  var pinned="";
+  if(d.note || d.image_url){
+    var photo=d.image_url?('<a href="'+esc(d.image_url)+'" target="_blank" rel="noopener">'+
+      '<img class="pin-photo" src="'+esc(d.image_url)+'" alt="Latest update"></a>'):"";
+    var bodyTxt=d.note?esc(d.note):"A new photo of your order.";
+    pinned='<div class="pinned"><small>Latest update from '+name+'</small>'+
+      '<div class="pin-body">'+bodyTxt+'</div>'+photo+'</div>';
+  }
+
+  root.className = proofCol ? "wrap wide" : "wrap";
   root.innerHTML=
-    '<div style="text-align:center;margin-bottom:12px">'+logoHtml+'</div>'+
-    '<div class="card"><h2>Order Status</h2><div class="badge">'+esc(cur)+'</div>'+
-    '<div class="price">'+esc(d.price_text||"")+'</div>'+
-    (d.note?'<div class="note">'+esc(d.note)+'</div>':'')+
-    // The photo is part of the same update as the note, so it sits with it.
-    // Opens full size in a new tab, since phone photos are bigger than the card.
-    (d.image_url?'<a href="'+esc(d.image_url)+'" target="_blank" rel="noopener">'+
-      '<img class="update-photo" src="'+esc(d.image_url)+'" alt="Latest update"></a>':'')+'</div>'+
-    approveHtml+
-    // The thread is filled in after the status renders, so a slow or empty
-    // conversation never holds up the part the customer came for.
-    '<div class="card"><h3>Messages</h3>'+
-    '<p style="color:#8aa8c5;margin:0 0 10px;font-size:13px">Questions about your order? Write below and '+esc(name)+' will see it. Replies appear here. Messages are kept for 30 days, or until the job is finished.</p>'+
-    '<div id="msgs"></div>'+
-    '<textarea id="msgBox" class="msg-box" maxlength="4000" placeholder="Type your message"></textarea>'+
-    '<button id="msgSend" class="msg-send" onclick="sendMessage()">Send message</button>'+
-    '<p id="msgNote" class="msg-note"></p></div>'+
-    '<div class="card"><h3>Progress</h3>'+stepHtml+'</div>'+
+    '<div class="card header'+(proofCol?'':' no-proof')+'">'+
+      '<div class="status">'+logoHtml+
+        '<h1>'+name+' Order Status</h1>'+
+        linksHtml(d.shop_links)+
+        '<span class="badge">'+esc(cur)+'</span>'+
+        '<div class="price">'+esc(d.price_text||"")+'</div>'+
+        '<a href="#talk" id="unread-pill" class="unread-pill" style="display:none"></a>'+
+      '</div>'+proofCol+
+    '</div>'+
+    approveCard+
+    '<div class="card"><h2>Progress</h2>'+stepHtml+'</div>'+
+    // One section, not two: the note and the conversation are both "what the
+    // shop has told me", and splitting them made the customer look in two places.
+    '<div class="card" id="talk"><h2>Updates &amp; messages</h2>'+
+      pinned+
+      '<div id="msgs"></div>'+
+      '<label for="msgBox" class="sr">Write a message</label>'+
+      '<textarea id="msgBox" class="composer" maxlength="4000" placeholder="Ask a question about your order"></textarea>'+
+      '<button id="msgSend" class="send" onclick="sendMessage()">Send message</button>'+
+      '<p id="msgNote" class="fine" aria-live="polite"></p>'+
+      '<p class="fine">Messages are kept for 30 days and removed when the order is completed.</p>'+
+    '</div>'+
     '<p class="muted">Powered by MakerQ</p>';
   document.title=(d.shop_name||"Order")+" — Order Status";
-  // After the status is on screen, not before: the conversation is the
-  // least urgent thing here and must never delay the rest.
+  // After the status is on screen, not before: the conversation is the least
+  // urgent thing here and must never delay the rest.
   loadMessages();
 }
-// Rendered from scratch each time rather than appended to, so the customer's
-// own message and anything that arrived meanwhile stay in the right order.
+function mqSeen(){try{return Number(localStorage.getItem(seenKey)||0)}catch(e){return 0}}
+function mqMarkSeen(n){try{localStorage.setItem(seenKey,String(n))}catch(e){}}
+// Rendered from scratch each time rather than appended to, so the customer's own
+// message and anything that arrived meanwhile stay in the right order.
 function renderMessages(list){
   var box=document.getElementById('msgs'); if(!box) return;
-  if(!list || !list.length){ box.innerHTML='<p style="color:#8aa8c5;font-size:13px;margin:0 0 6px">No messages yet.</p>'; return; }
-  box.innerHTML=list.map(function(m){
-    var mine=(m.sender==='customer');
-    return '<div class="msg '+(mine?'me':'them')+'"><span class="who">'+
+  if(!list || !list.length){
+    box.innerHTML='<p class="fine" style="margin:0 0 6px">No messages yet. Have a question about this order? Send a note and '+esc(shopName)+' will reply here.</p>';
+    return;
+  }
+  var seen=mqSeen(), newest=0, marked=false, html='';
+  list.forEach(function(m,i){
+    var mine=(m.sender==='customer'), idx=i+1;
+    if(!mine) newest=Math.max(newest,idx);
+    if(!mine && !marked && idx>seen){ html+='<div class="newline">New since your last visit</div>'; marked=true; }
+    html+='<div class="msg '+(mine?'me':'them')+'"><span class="who">'+
       (mine?'You':esc(shopName))+'</span>'+esc(m.body)+'</div>';
-  }).join('');
+  });
+  box.innerHTML=html;
+  var pill=document.getElementById('unread-pill');
+  var unread=Math.max(0,newest-seen);
+  if(pill){
+    if(unread>0){ pill.textContent=unread+(unread===1?' new reply':' new replies')+' from '+shopName+' ↓';
+      pill.style.display='inline-block'; }
+    else pill.style.display='none';
+  }
+  // Marked as read when the conversation is actually looked at, not on load:
+  // someone who only glanced at the status badge has not read anything.
+  if(newest>seen && 'IntersectionObserver' in window){
+    var io2=new IntersectionObserver(function(es){
+      es.forEach(function(e){ if(e.isIntersecting){ mqMarkSeen(newest);
+        var p=document.getElementById('unread-pill'); if(p) p.style.display='none';
+        io2.disconnect(); } });
+    },{threshold:0.4});
+    io2.observe(box);
+  }
 }
 function loadMessages(){
   fetch(API+'?action=messages&token='+encodeURIComponent(token()))
@@ -125,35 +263,62 @@ function sendMessage(){
       note=document.getElementById('msgNote');
   var text=(box.value||'').trim();
   if(!text){ note.textContent='Write a message first.'; return; }
-  btn.disabled=true; btn.textContent='Sending...'; note.textContent='';
+  btn.disabled=true; btn.textContent='Sending…'; note.textContent='';
   fetch(API+'?action=comment',{method:'POST',headers:{'Content-Type':'application/json'},
     body:JSON.stringify({token:token(),body:text})})
     .then(function(r){return r.json().catch(function(){return {}})})
     .then(function(d){
-      if(d && d.ok){ box.value=''; note.textContent='Sent. '+esc(shopName)+' has been emailed.';
-        loadMessages(); }
+      if(d && d.ok){
+        // Only now is the box cleared: losing what someone typed because the
+        // network blinked is worse than making them press send twice.
+        box.value=''; note.textContent='Sent. '+shopName+' has been emailed.';
+        loadMessages();
+      }
       else { note.textContent=(d && d.error) || 'That did not send. Please try again.'; }
     })
     .catch(function(){ note.textContent='That did not send. Please try again.'; })
     .finally(function(){ btn.disabled=false; btn.textContent='Send message'; });
 }
 function approve(){
-  var b=document.getElementById("approveBtn");
+  var b=document.getElementById("approveBtn"), n=document.getElementById("approveNote");
+  var label=b?b.textContent:"";
   if(b){b.disabled=true;b.textContent="Approving…";}
+  if(n){n.textContent="";}
   fetch(API+"?action=approve",{method:"POST",headers:{"Content-Type":"application/json"},
     body:JSON.stringify({token:token()})})
     .then(function(r){return r.json()})
     .then(function(res){
       if(res&&res.ok){ load(); }
-      else { if(b){b.disabled=false;b.textContent="Approve this quote";} alert("Sorry, that didn't go through. Please try again."); }
+      // Said on the page rather than in an alert: a modal blocks the whole page,
+      // and the customer can simply press the button again.
+      else { if(b){b.disabled=false;b.textContent=label;}
+             if(n){n.textContent="That did not go through. Please try again.";} }
     })
-    .catch(function(){ if(b){b.disabled=false;b.textContent="Approve this quote";} alert("Network error — please try again."); });
+    .catch(function(){ if(b){b.disabled=false;b.textContent=label;}
+                       if(n){n.textContent="Network problem — please try again.";} });
 }
 function load(){
   var t=token();
   if(!t){render({found:false});return}
   fetch(API+"?token="+encodeURIComponent(t)).then(function(r){return r.json()}).then(render).catch(function(){render({found:false})});
 }
+// Remembered per reader, and only when they actually choose: with nothing stored
+// the page follows the device, which is what most people want.
+function mqThemeNow(){
+  try{var v=localStorage.getItem('mq-theme'); if(v) return v;}catch(e){}
+  return (window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches)?'light':'dark';
+}
+function mqThemeApply(v){
+  document.documentElement.setAttribute('data-theme',v);
+  var b=document.getElementById('themebtn');
+  if(b) b.textContent = (v==='light') ? '☾ Dark' : '☀ Light';
+}
+function mqTheme(){
+  var v = (mqThemeNow()==='light') ? 'dark' : 'light';
+  try{localStorage.setItem('mq-theme',v);}catch(e){}
+  mqThemeApply(v);
+}
+mqThemeApply(mqThemeNow());
 load();
 </script>
 </body>
