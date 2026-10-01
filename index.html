@@ -13,6 +13,14 @@
   h3{color:#ff8c3a;margin:0 0 8px}
   .badge{display:inline-block;border:1px solid #1e3550;border-radius:999px;padding:6px 12px;color:#33ccff;font-weight:bold}
   .price{font-size:28px;color:#00e890;font-weight:bold;margin:12px 0}
+  .msg{border-radius:12px;padding:10px 12px;margin:8px 0;max-width:85%;font-size:14px;line-height:1.45}
+  .msg.them{background:#16263a;border:1px solid #1e3550;color:#ddeeff}
+  .msg.me{background:rgba(0,179,65,.14);border:1px solid rgba(0,179,65,.45);color:#d8ffe8;margin-left:auto}
+  .msg .who{display:block;font-size:11px;color:#8aa8c5;margin-bottom:3px}
+  .msg-box{width:100%;box-sizing:border-box;background:#0d1928;border:1px solid #1e3550;border-radius:12px;color:#ddeeff;padding:10px;font:inherit;min-height:72px}
+  .msg-send{display:block;width:100%;box-sizing:border-box;background:#1a73e8;color:#fff;border:0;border-radius:12px;padding:12px;font-size:15px;font-weight:bold;cursor:pointer;margin-top:8px}
+  .msg-send:disabled{background:#3a4a5c;cursor:default}
+  .msg-note{color:#8aa8c5;font-size:12px;margin:8px 0 0}
   .update-photo{display:block;width:100%;height:auto;margin-top:10px;border-radius:12px;
     border:1px solid rgba(255,255,255,.12)}
   .note{background:rgba(255,140,58,.08);border:1px solid rgba(255,140,58,.35);border-radius:12px;padding:12px;color:#ff8c3a;margin-top:10px}
@@ -35,6 +43,7 @@
 </div>
 <script>
 // MakerQ shared status service (Supabase Edge Function that returns JSON).
+var shopName="";
 var API = "https://enyimtvgqzmpaiaeiyxj.supabase.co/functions/v1/dynamic-endpoint";
 function esc(s){return String(s==null?"":s).replace(/[&<>"']/g,function(c){return({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"})[c]})}
 function token(){ // support #token, ?token=, #token=
@@ -46,7 +55,7 @@ function token(){ // support #token, ?token=, #token=
 function render(d){
   var root=document.getElementById("root");
   if(!d||!d.found){root.innerHTML='<div class="card"><h1 style="color:#33ccff">Order not found</h1><p>This status link is no longer available.</p></div>';return}
-  var name=esc(d.shop_name||"Your shop");
+  var name=esc(d.shop_name||"Your shop");shopName=d.shop_name||"Your shop";
   var logo=String(d.logo_url||"");
   var logoHtml=logo.indexOf("http")===0?'<img class="logo" src="'+esc(logo)+'" alt="'+name+'">':'<h1 style="color:#33ccff;margin:0">'+name+'</h1>';
   var steps=["Quote Sent","Approved","Payment Received","Printing","Completed"];
@@ -79,9 +88,54 @@ function render(d){
     (d.image_url?'<a href="'+esc(d.image_url)+'" target="_blank" rel="noopener">'+
       '<img class="update-photo" src="'+esc(d.image_url)+'" alt="Latest update"></a>':'')+'</div>'+
     approveHtml+
+    // The thread is filled in after the status renders, so a slow or empty
+    // conversation never holds up the part the customer came for.
+    '<div class="card"><h3>Messages</h3>'+
+    '<p style="color:#8aa8c5;margin:0 0 10px;font-size:13px">Questions about your order? Write below and '+esc(name)+' will see it. Replies appear here. Messages are kept for 30 days, or until the job is finished.</p>'+
+    '<div id="msgs"></div>'+
+    '<textarea id="msgBox" class="msg-box" maxlength="4000" placeholder="Type your message"></textarea>'+
+    '<button id="msgSend" class="msg-send" onclick="sendMessage()">Send message</button>'+
+    '<p id="msgNote" class="msg-note"></p></div>'+
     '<div class="card"><h3>Progress</h3>'+stepHtml+'</div>'+
     '<p class="muted">Powered by MakerQ</p>';
   document.title=(d.shop_name||"Order")+" — Order Status";
+  // After the status is on screen, not before: the conversation is the
+  // least urgent thing here and must never delay the rest.
+  loadMessages();
+}
+// Rendered from scratch each time rather than appended to, so the customer's
+// own message and anything that arrived meanwhile stay in the right order.
+function renderMessages(list){
+  var box=document.getElementById('msgs'); if(!box) return;
+  if(!list || !list.length){ box.innerHTML='<p style="color:#8aa8c5;font-size:13px;margin:0 0 6px">No messages yet.</p>'; return; }
+  box.innerHTML=list.map(function(m){
+    var mine=(m.sender==='customer');
+    return '<div class="msg '+(mine?'me':'them')+'"><span class="who">'+
+      (mine?'You':esc(shopName))+'</span>'+esc(m.body)+'</div>';
+  }).join('');
+}
+function loadMessages(){
+  fetch(API+'?action=messages&token='+encodeURIComponent(token()))
+    .then(function(r){return r.json()})
+    .then(function(d){renderMessages(d.messages||[])})
+    .catch(function(){});
+}
+function sendMessage(){
+  var box=document.getElementById('msgBox'), btn=document.getElementById('msgSend'),
+      note=document.getElementById('msgNote');
+  var text=(box.value||'').trim();
+  if(!text){ note.textContent='Write a message first.'; return; }
+  btn.disabled=true; btn.textContent='Sending...'; note.textContent='';
+  fetch(API+'?action=comment',{method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({token:token(),body:text})})
+    .then(function(r){return r.json().catch(function(){return {}})})
+    .then(function(d){
+      if(d && d.ok){ box.value=''; note.textContent='Sent. '+esc(shopName)+' has been emailed.';
+        loadMessages(); }
+      else { note.textContent=(d && d.error) || 'That did not send. Please try again.'; }
+    })
+    .catch(function(){ note.textContent='That did not send. Please try again.'; })
+    .finally(function(){ btn.disabled=false; btn.textContent='Send message'; });
 }
 function approve(){
   var b=document.getElementById("approveBtn");
